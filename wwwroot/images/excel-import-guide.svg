@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300" role="img" aria-labelledby="title desc">
+  <title id="title">Example Excel vocabulary file</title>
+  <desc id="desc">A spreadsheet example showing required English and Vietnamese columns, and optional IPA pronunciation, example, and category columns.</desc>
+  <rect width="900" height="300" rx="18" fill="#101b2d"/>
+  <rect x="22" y="22" width="856" height="256" rx="12" fill="#17263d" stroke="#314663"/>
+  <rect x="23" y="23" width="854" height="48" rx="11" fill="#1e3a5f"/>
+  <path d="M23 60h854v12H23z" fill="#1e3a5f"/>
+  <g font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#eaf3ff">
+    <text x="45" y="53">English *</text>
+    <text x="203" y="53">Vietnamese *</text>
+    <text x="370" y="44">Pronunciation</text><text x="370" y="61" fill="#a9c7e8">(IPA, optional)</text>
+    <text x="548" y="53">Example (optional)</text>
+    <text x="755" y="53">Category</text>
+  </g>
+  <g stroke="#314663" stroke-width="1">
+    <path d="M180 23v254M350 23v254M530 23v254M740 23v254M23 72h854M23 136h854M23 200h854"/>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="15" fill="#f1f5fb">
+    <text x="45" y="111" font-weight="700">achieve</text><text x="203" y="111">??t ???c</text><text x="370" y="111" fill="#67d9ef">/??t?i?v/</text><text x="548" y="101">I want to achieve</text><text x="548" y="120">my goal.</text><text x="755" y="111">Basic</text>
+    <text x="45" y="175" font-weight="700">environment</text><text x="203" y="175">môi tr??ng</text><text x="370" y="175" fill="#67d9ef">/?n?va?r?nm?nt/</text><text x="548" y="165">Protect the</text><text x="548" y="184">environment.</text><text x="755" y="175">Nature</text>
+    <text x="45" y="239" font-weight="700">collaborate</text><text x="203" y="239">h?p tác</text><text x="370" y="239" fill="#67d9ef">/k??læb?re?t/</text><text x="548" y="229">Teams collaborate</text><text x="548" y="248">efficiently.</text><text x="755" y="239">Business</text>
+  </g>
+  <text x="45" y="265" font-family="Arial, sans-serif" font-size="12" fill="#fbbf24">* Required columns — every word row needs both fields</text>
+</svg>

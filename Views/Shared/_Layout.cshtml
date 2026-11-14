@@ -1,0 +1,175 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isAuth = SignInManager.IsSignedIn(User);
+    var currentUser = isAuth ? await UserManager.GetUserAsync(User) : null;
+    var userInitial = currentUser != null && !string.IsNullOrWhiteSpace(currentUser.FullName) 
+        ? currentUser.FullName.Substring(0, 1).ToUpper() 
+        : "U";
+    var userDisplayName = currentUser?.FullName ?? "User";
+    var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAct = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VocaLearn</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @if (isAuth)
+    {
+        <div class="app-container">
+            <!-- Sidebar -->
+            <aside class="app-sidebar">
+                <div class="sidebar-header">
+                    <div class="logo-badge">V</div>
+                    <div class="logo-text">Voca<span>Learn</span></div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-label">Main Menu</div>
+                    <a asp-controller="Home" asp-action="Index" class="@(currentCtrl == "Home" ? "active" : "")">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a asp-controller="Vocabulary" asp-action="Index" class="@(currentCtrl == "Vocabulary" ? "active" : "")">
+                        <i data-lucide="book-open"></i>
+                        <span>My Vocabulary</span>
+                    </a>
+                    <a asp-controller="Category" asp-action="Index" class="@(currentCtrl == "Category" ? "active" : "")">
+                        <i data-lucide="folder-tree"></i>
+                        <span>Categories</span>
+                    </a>
+
+                    <div class="nav-label" style="margin-top: 0.5rem;">Study & Practice</div>
+                    <a asp-controller="Flashcards" asp-action="Index" class="@(currentCtrl == "Flashcards" ? "active" : "")">
+                        <i data-lucide="layers"></i>
+                        <span>Flashcards</span>
+                    </a>
+                    <a asp-controller="Quiz" asp-action="Index" class="@(currentCtrl == "Quiz" ? "active" : "")">
+                        <i data-lucide="help-circle"></i>
+                        <span>Quiz</span>
+                    </a>
+                    <a asp-controller="Listening" asp-action="Index" class="@(currentCtrl == "Listening" ? "active" : "")">
+                        <i data-lucide="headphones"></i>
+                        <span>Listening Practice</span>
+                    </a>
+                    <a asp-controller="Progress" asp-action="Index" class="@(currentCtrl == "Progress" ? "active" : "")">
+                        <i data-lucide="trending-up"></i>
+                        <span>Learning Progress</span>
+                    </a>
+
+                    <div class="nav-label" style="margin-top: 0.5rem;">Data & Tools</div>
+                    <a asp-controller="Import" asp-action="Index" class="@(currentCtrl == "Import" ? "active" : "")">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <span>Import Vocabulary</span>
+                    </a>
+                    <a asp-controller="Account" asp-action="Profile" class="@(currentCtrl == "Account" ? "active" : "")">
+                        <i data-lucide="settings"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-vl btn-vl-secondary" style="width: 100%; justify-content: flex-start;">
+                            <i data-lucide="log-out" style="width: 17px; height: 17px;"></i>
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <div class="app-main">
+                <!-- Topbar -->
+                <header class="app-topbar">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Navigation">
+                            <i data-lucide="menu"></i>
+                        </button>
+                        <form asp-controller="Vocabulary" asp-action="Index" method="get" class="topbar-search">
+                            <i data-lucide="search" class="search-icon" style="width: 16px; height: 16px;"></i>
+                            <input type="text" name="search" placeholder="Search vocabulary or meanings..." />
+                        </form>
+                    </div>
+
+                    <div class="topbar-actions">
+                        <a asp-controller="Vocabulary" asp-action="Create" class="btn-vl btn-vl-primary btn-vl-sm">
+                            <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                            <span>Add Word</span>
+                        </a>
+
+                        <div style="position: relative;">
+                            <a asp-controller="Account" asp-action="Profile" class="user-profile-badge">
+                                <div class="avatar-circle">@userInitial</div>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--main-text); line-height: 1.2;">@userDisplayName</span>
+                                    <span style="font-size: 0.725rem; color: var(--secondary-text);">Learner</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <main class="app-content">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert-vl alert-vl-success">
+                            <i data-lucide="check-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                            <span>@TempData["SuccessMessage"]</span>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert-vl alert-vl-danger">
+                            <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                            <span>@TempData["ErrorMessage"]</span>
+                        </div>
+                    }
+
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Public Layout for Login/Register -->
+        <main>
+            @RenderBody()
+        </main>
+    }
+
+    <!-- Scripts -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

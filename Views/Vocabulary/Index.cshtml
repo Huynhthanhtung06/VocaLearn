@@ -1,0 +1,281 @@
+@model VocaLearn.ViewModels.VocabularyListViewModel
+@{
+    ViewData["Title"] = "My Vocabulary";
+}
+
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Page Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            @if (!string.IsNullOrWhiteSpace(Model.LessonName))
+            {
+                <a asp-action="Index" class="btn-vl btn-vl-secondary btn-vl-sm" style="margin-bottom: 0.6rem; display: inline-flex;">
+                    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                    <span>All lessons</span>
+                </a>
+            }
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">
+                My Vocabulary Library
+            </h1>
+            <p style="color: var(--secondary-text);">
+                Managing @Model.TotalItems vocabulary words in your private library.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            @if (!string.IsNullOrWhiteSpace(Model.LessonName))
+            {
+                <a asp-controller="Flashcards" asp-action="Index" asp-route-lesson="@Model.LessonName" class="btn-vl btn-vl-accent">
+                    <i data-lucide="layers" style="width: 17px; height: 17px;"></i>
+                    <span>Study this lesson</span>
+                </a>
+            }
+            <a asp-controller="Import" asp-action="Index" class="btn-vl btn-vl-secondary">
+                <i data-lucide="file-spreadsheet" style="width: 17px; height: 17px;"></i>
+                <span>Import Excel</span>
+            </a>
+            <form asp-action="DeleteAll" method="post" style="display: inline;" onsubmit="return confirmDeleteAll();">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-vl btn-vl-secondary" style="color: var(--error); border-color: var(--error);">
+                    <i data-lucide="trash" style="width: 17px; height: 17px;"></i>
+                    <span>Delete all</span>
+                </button>
+            </form>
+            <form asp-action="DeleteMany" method="post" id="deleteSelectedForm" style="display: inline;" onsubmit="return confirmDeleteSelected();">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-vl btn-vl-secondary" style="color: var(--error);">
+                    <i data-lucide="trash-2" style="width: 17px; height: 17px;"></i>
+                    <span>Delete selected</span>
+                </button>
+            </form>
+            <a asp-action="Create" class="btn-vl btn-vl-primary">
+                <i data-lucide="plus" style="width: 17px; height: 17px;"></i>
+                <span>Add New Word</span>
+            </a>
+        </div>
+
+<script>
+    function confirmDeleteAll() {
+        return confirm('This will permanently delete all vocabulary words in your library. Continue?')
+            && confirm('Final confirmation: delete ALL vocabulary words?');
+    }
+</script>
+    </div>
+
+    <!-- Filters & Search Bar -->
+    <div class="vl-card" style="padding: 1.25rem;">
+        <form method="get" asp-action="Index" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <!-- Search Text -->
+            <div style="flex: 2; min-width: 220px; position: relative;">
+                <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search by English, Vietnamese, or sentence..." class="form-control-vl" />
+            </div>
+
+            <!-- Category Filter -->
+            <div style="flex: 1; min-width: 160px;">
+                <select name="categoryId" class="form-control-vl">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div style="flex: 1; min-width: 150px;">
+                <select name="status" class="form-control-vl">
+                    <option value="">All Statuses</option>
+                    <option value="@VocabularyStatus.NotLearned" selected="@(Model.Status == VocabularyStatus.NotLearned)">Not Learned</option>
+                    <option value="@VocabularyStatus.Learning" selected="@(Model.Status == VocabularyStatus.Learning)">Learning</option>
+                    <option value="@VocabularyStatus.Learned" selected="@(Model.Status == VocabularyStatus.Learned)">Learned</option>
+                    <option value="@VocabularyStatus.NeedsReview" selected="@(Model.Status == VocabularyStatus.NeedsReview)">Needs Review</option>
+                </select>
+            </div>
+
+            <!-- Needs Practice Toggle -->
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--secondary-text); cursor: pointer; white-space: nowrap;">
+                <input type="checkbox" name="needsPracticeOnly" value="true" checked="@(Model.NeedsPracticeOnly == true)" style="accent-color: var(--primary-blue);" />
+                <span>Needs Practice Only</span>
+            </label>
+
+            <!-- Submit & Reset -->
+            <button type="submit" class="btn-vl btn-vl-primary btn-vl-sm">
+                <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
+                <span>Filter</span>
+            </button>
+            <a asp-action="Index" class="btn-vl btn-vl-secondary btn-vl-sm">
+                Reset
+            </a>
+        </form>
+    </div>
+
+    <!-- Lessons / Vocabulary Grid -->
+    @if (string.IsNullOrWhiteSpace(Model.LessonName))
+    {
+        <div>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--main-text); margin-bottom: 1rem;">Choose a lesson</h2>
+            @if (Model.Lessons.Any())
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+                    @foreach (var lesson in Model.Lessons)
+                    {
+                        <a asp-action="Index" asp-route-lessonName="@lesson" class="vl-card" style="text-decoration: none; padding: 1.5rem; border: 1px solid var(--border-active); transition: var(--transition);">
+                            <i data-lucide="book-open" style="width: 28px; height: 28px; color: var(--accent-cyan); margin-bottom: 0.75rem;"></i>
+                            <h3 style="color: var(--main-text); margin-bottom: 0.35rem;">@lesson</h3>
+                            <span style="color: var(--secondary-text); font-size: 0.85rem;">Open lesson →</span>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="vl-card" style="text-align: center; padding: 3rem 1.5rem;">
+                    <h3 style="color: var(--main-text);">No lessons found</h3>
+                    <p style="color: var(--secondary-text);">Import a file and enter a lesson name to create your first lesson.</p>
+                </div>
+            }
+        </div>
+    }
+    else if (!Model.Items.Any())
+    {
+        <div class="vl-card" style="text-align: center; padding: 4rem 1.5rem;">
+            <i data-lucide="search-x" style="width: 50px; height: 50px; color: var(--muted-text); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--main-text); margin-bottom: 0.5rem;">No vocabulary items found</h3>
+            <p style="color: var(--secondary-text); max-width: 400px; margin: 0 auto 1.5rem;">
+                Try adjusting your search criteria or add new vocabulary to your collection.
+            </p>
+            <a asp-action="Create" class="btn-vl btn-vl-primary">
+                Add Vocabulary Word
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+            @foreach (var vocab in Model.Items)
+            {
+                <div class="vl-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <!-- Header: Category & Status -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                            <label title="Select word to delete" style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="selectedIds" value="@vocab.Id" form="deleteSelectedForm" class="vocabulary-checkbox" style="accent-color: var(--primary-blue);" />
+                            </label>
+                            <span style="font-size: 0.775rem; font-weight: 700; color: @(vocab.Category?.Color ?? "#3B82F6"); background: rgba(59, 130, 246, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px;">
+                                @(vocab.Category?.Name ?? "General")
+                            </span>
+
+                            @if (vocab.Status == VocabularyStatus.Learned)
+                            {
+                                <span class="badge-vl badge-learned">Learned</span>
+                            }
+                            else if (vocab.Status == VocabularyStatus.Learning)
+                            {
+                                <span class="badge-vl badge-learning">Learning</span>
+                            }
+                            else if (vocab.NeedsPractice || vocab.Status == VocabularyStatus.NeedsReview)
+                            {
+                                <span class="badge-vl badge-needsreview">Practice</span>
+                            }
+                            else
+                            {
+                                <span class="badge-vl badge-notlearned">Not Learned</span>
+                            }
+                        </div>
+
+                        <!-- Word & Audio Pronunciation -->
+                        <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--main-text); margin-bottom: 0;">
+                                @vocab.Word
+                            </h3>
+                            <button type="button" class="speak-btn" style="width: 30px; height: 30px;" onclick="speakWord('@vocab.Word')" title="Pronounce">
+                                <i data-lucide="volume-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+
+                        <!-- Pronunciation IPA -->
+                        @if (!string.IsNullOrWhiteSpace(vocab.Pronunciation))
+                        {
+                            <div style="font-family: monospace; font-size: 0.875rem; color: var(--accent-cyan); margin-bottom: 0.75rem;">
+                                @vocab.Pronunciation
+                            </div>
+                        }
+
+                        <!-- Meaning -->
+                        <div style="font-size: 1.05rem; font-weight: 600; color: var(--main-text); margin-bottom: 0.75rem; line-height: 1.4;">
+                            @vocab.Meaning
+                        </div>
+
+                        <!-- Example Sentence -->
+                        @if (!string.IsNullOrWhiteSpace(vocab.Example))
+                        {
+                            <div style="font-size: 0.875rem; color: var(--secondary-text); font-style: italic; background-color: rgba(255, 255, 255, 0.02); padding: 0.75rem; border-radius: 8px; border-left: 3px solid var(--primary-blue); margin-bottom: 1rem;">
+                                "@vocab.Example"
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Card Footer: Stats & Actions -->
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: var(--muted-text);">
+                            Reviews: @vocab.ReviewCount • Correct: @vocab.CorrectCount
+                        </span>
+
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a asp-action="Details" asp-route-id="@vocab.Id" class="btn-vl btn-vl-secondary btn-vl-sm" title="Details">
+                                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@vocab.Id" class="btn-vl btn-vl-secondary btn-vl-sm" title="Edit">
+                                <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@vocab.Id" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete \'@vocab.Word\'?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-vl btn-vl-secondary btn-vl-sm" style="color: var(--error);" title="Delete">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
+                @if (Model.HasPreviousPage)
+                {
+                    <a asp-action="Index"
+                       asp-route-pageIndex="@(Model.PageIndex - 1)"
+                       asp-route-search="@Model.SearchTerm"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-status="@Model.Status"
+                       asp-route-needsPracticeOnly="@Model.NeedsPracticeOnly"
+                       class="btn-vl btn-vl-secondary btn-vl-sm">
+                        <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>
+                        <span>Previous</span>
+                    </a>
+                }
+
+                <span style="font-size: 0.875rem; color: var(--secondary-text); padding: 0 0.75rem;">
+                    Page @Model.PageIndex of @Model.TotalPages
+                </span>
+
+                @if (Model.HasNextPage)
+                {
+                    <a asp-action="Index"
+                       asp-route-pageIndex="@(Model.PageIndex + 1)"
+                       asp-route-search="@Model.SearchTerm"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-status="@Model.Status"
+                       asp-route-needsPracticeOnly="@Model.NeedsPracticeOnly"
+                       class="btn-vl btn-vl-secondary btn-vl-sm">
+                        <span>Next</span>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>

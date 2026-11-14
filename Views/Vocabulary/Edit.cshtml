@@ -1,0 +1,90 @@
+@model VocaLearn.ViewModels.VocabularyFormViewModel
+@{
+    ViewData["Title"] = $"Edit {Model.Word}";
+}
+
+<div style="max-width: 680px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <a asp-action="Index" class="btn-vl btn-vl-secondary btn-vl-sm" style="margin-bottom: 1rem; display: inline-flex;">
+            <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+            <span>Back to Library</span>
+        </a>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">Edit Word: @Model.Word</h1>
+        <p style="color: var(--secondary-text);">Update details, translation and category</p>
+    </div>
+
+    <div class="vl-card">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-vl alert-vl-danger" style="margin-bottom: 1.5rem;">
+                <div asp-validation-summary="All"></div>
+            </div>
+        }
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="grid-cols-2">
+                <div class="form-group">
+                    <label asp-for="Word" class="form-label">English Word *</label>
+                    <input asp-for="Word" class="form-control-vl" />
+                    <span asp-validation-for="Word" style="color: var(--error); font-size: 0.8rem;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Pronunciation" class="form-label">Phonetic / IPA (Optional)</label>
+                    <input asp-for="Pronunciation" class="form-control-vl" />
+                    <span asp-validation-for="Pronunciation" style="color: var(--error); font-size: 0.8rem;"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Meaning" class="form-label">Vietnamese Meaning *</label>
+                <input asp-for="Meaning" class="form-control-vl" />
+                <span asp-validation-for="Meaning" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Example" class="form-label">Example Sentence</label>
+                <textarea asp-for="Example" class="form-control-vl" rows="3"></textarea>
+                <span asp-validation-for="Example" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="grid-cols-2">
+                <div class="form-group">
+                    <label asp-for="CategoryId" class="form-label">Category *</label>
+                    <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control-vl"></select>
+                    <span asp-validation-for="CategoryId" style="color: var(--error); font-size: 0.8rem;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Status" class="form-label">Learning Status</label>
+                    <select asp-for="Status" class="form-control-vl">
+                        <option value="@VocabularyStatus.NotLearned">Not Learned</option>
+                        <option value="@VocabularyStatus.Learning">Learning</option>
+                        <option value="@VocabularyStatus.Learned">Learned</option>
+                        <option value="@VocabularyStatus.NeedsReview">Needs Review</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--main-text); cursor: pointer;">
+                    <input asp-for="NeedsPractice" type="checkbox" style="accent-color: var(--primary-blue);" />
+                    <span>Flag as "Need More Practice" (prioritized in flashcards)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn-vl btn-vl-primary" style="flex: 1;">
+                    <i data-lucide="check" style="width: 17px; height: 17px;"></i>
+                    <span>Update Word</span>
+                </button>
+                <a asp-action="Index" class="btn-vl btn-vl-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+@model VocaLearn.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+    Layout = "_Layout";
+}
+
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.12), transparent 60%), #0B1120;">
+    <div class="vl-card" style="width: 100%; max-width: 460px; padding: 2.5rem; border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="logo-badge" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">V</div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.35rem;">Create Account</h1>
+            <p style="color: var(--secondary-text); font-size: 0.95rem;">Start expanding your English vocabulary today</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-vl alert-vl-danger" style="margin-bottom: 1.5rem;">
+                <div asp-validation-summary="All"></div>
+            </div>
+        }
+
+        <form asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label asp-for="FullName" class="form-label">Full Name</label>
+                <input asp-for="FullName" class="form-control-vl" placeholder="e.g. John Doe" />
+                <span asp-validation-for="FullName" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="form-label">Email Address</label>
+                <input asp-for="Email" class="form-control-vl" placeholder="name@example.com" />
+                <span asp-validation-for="Email" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password" class="form-label">Password</label>
+                <input asp-for="Password" class="form-control-vl" placeholder="Minimum 6 characters" />
+                <span asp-validation-for="Password" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                <input asp-for="ConfirmPassword" class="form-control-vl" placeholder="Re-type password" />
+                <span asp-validation-for="ConfirmPassword" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <button type="submit" class="btn-vl btn-vl-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 0.5rem;">
+                Create Free Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--secondary-text);">
+            Already have an account? 
+            <a asp-action="Login" style="font-weight: 600; color: var(--accent-cyan);">Sign in</a>
+        </div>
+    </div>
+</div>

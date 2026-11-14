@@ -1,0 +1,354 @@
+@model VocaLearn.ViewModels.FlashcardSessionViewModel
+@{
+    ViewData["Title"] = "Flashcards Study";
+}
+
+<div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Page Header & Filters -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">
+                Flashcards Study
+            </h1>
+            <p style="color: var(--secondary-text);">Interactive 3D vocabulary recall session</p>
+        </div>
+
+        <form method="get" asp-action="Index" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <select name="categoryId" onchange="this.form.submit()" class="form-control-vl" style="width: auto; padding: 0.45rem 1rem;">
+                <option value="">All Categories</option>
+                @foreach (var cat in Model.Categories)
+                {
+                    <option value="@cat.Id" selected="@(Model.SelectedCategoryId == cat.Id)">@cat.Name</option>
+                }
+            </select>
+
+            <select name="filter" onchange="this.form.submit()" class="form-control-vl" style="width: auto; padding: 0.45rem 1rem;">
+                <option value="all" selected="@(Model.Filter == "all")">All Words</option>
+                <option value="needsPractice" selected="@(Model.Filter == "needsPractice")">Need More Practice</option>
+                <option value="unlearned" selected="@(Model.Filter == "unlearned")">Unlearned Only</option>
+            </select>
+
+            <label style="display: flex; align-items: center; gap: 0.4rem; color: var(--secondary-text); font-size: 0.85rem; white-space: nowrap;">
+                <i data-lucide="book-open" style="width: 16px; height: 16px;"></i>
+                <span>Choose lesson</span>
+            </label>
+            <select name="lesson" aria-label="Choose lesson" onchange="this.form.submit()" class="form-control-vl" style="width: auto; min-width: 130px; padding: 0.45rem 1rem;">
+                @foreach (var lesson in Model.Lessons)
+                {
+                    <option value="@lesson" selected="@(Model.SelectedLesson == lesson)">@lesson</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    @if (!Model.Cards.Any())
+    {
+        <div class="vl-card" style="text-align: center; padding: 4rem 2rem;">
+            <i data-lucide="layers" style="width: 48px; height: 48px; color: var(--accent-cyan); margin-bottom: 1rem; opacity: 0.7;"></i>
+            <h2 style="color: var(--main-text); margin-bottom: 0.5rem;">No flashcards available</h2>
+            <p style="color: var(--secondary-text); max-width: 420px; margin: 0 auto 1.5rem;">
+                There are no words matching the selected category or filter.
+            </p>
+            <a asp-action="Index" asp-route-categoryId="" asp-route-filter="all" class="btn-vl btn-vl-primary">
+                View All Words
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Progress Counter -->
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                 <span id="progressText" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-cyan);">
+                     @Model.SelectedLesson · Word 1 of @Model.TotalCards
+                </span>
+                <span id="percentText" style="font-size: 0.85rem; color: var(--secondary-text);">
+                    0% Completed
+                </span>
+            </div>
+            <div class="vl-progress">
+                <div id="progressBar" class="vl-progress-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- 3D Flashcard Container -->
+        <div class="flashcard-scene" id="flashcardScene" onclick="toggleFlip()">
+            <div class="flashcard-object" id="flashcardObject">
+                <!-- Front Face -->
+                <div class="flashcard-face">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span id="cardCategory" style="font-size: 0.8rem; font-weight: 700; color: #3B82F6; background: rgba(59, 130, 246, 0.12); padding: 0.25rem 0.75rem; border-radius: 8px;">
+                            Category
+                        </span>
+                        <div id="cardStatusBadge"></div>
+                    </div>
+
+                    <div style="text-align: center; margin: auto 0;">
+                        <div id="cardFrontWord" class="flashcard-front-word">Word</div>
+                        <div id="cardPronunciation" class="flashcard-pronunciation">/pronunciation/</div>
+                        <div style="margin-top: 1.25rem;">
+                            <button type="button" class="speak-btn" onclick="event.stopPropagation(); speakCurrentWord();" title="Pronounce word">
+                                <i data-lucide="volume-2" style="width: 20px; height: 20px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--muted-text); border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+                        <span>Click card to flip</span>
+                        <span>Shortcut: Spacebar</span>
+                    </div>
+                </div>
+
+                <!-- Back Face -->
+                <div class="flashcard-face flashcard-back">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.05em;">
+                            Vietnamese Meaning
+                        </span>
+                        <button type="button" class="speak-btn" style="width: 32px; height: 32px;" onclick="event.stopPropagation(); speakCurrentWord();" title="Pronounce word">
+                            <i data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    </div>
+
+                    <div style="text-align: center; margin: auto 0;">
+                        <div id="cardBackMeaning" class="flashcard-meaning">Meaning</div>
+                        <div id="cardExample" class="flashcard-example">"Example sentence"</div>
+                    </div>
+
+                    <div style="text-align: center; font-size: 0.8rem; color: var(--muted-text); border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+                        Did you know this word? Use buttons below to record.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons: Know vs Need Practice -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <button type="button" class="btn-vl btn-vl-danger" style="padding: 1rem;" onclick="recordAction('practice')">
+                <i data-lucide="repeat" style="width: 20px; height: 20px;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 700;">Need More Practice</div>
+                    <div style="font-size: 0.75rem; opacity: 0.85;">Will review more often (Key: 1)</div>
+                </div>
+            </button>
+
+            <button type="button" class="btn-vl btn-vl-success" style="padding: 1rem;" onclick="recordAction('know')">
+                <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 700;">I Know This Word</div>
+                    <div style="font-size: 0.75rem; opacity: 0.85;">Mark as mastered (Key: 2)</div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Navigation Controls: Prev, Flip, Shuffle, Next -->
+        <div class="vl-card" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" onclick="prevCard()" id="btnPrev">
+                <i data-lucide="arrow-left" style="width: 15px; height: 15px;"></i>
+                <span>Previous (←)</span>
+            </button>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" onclick="toggleFlip()">
+                    <i data-lucide="rotate-cw" style="width: 15px; height: 15px;"></i>
+                    <span>Flip (Space)</span>
+                </button>
+                <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" onclick="shuffleCards()">
+                    <i data-lucide="shuffle" style="width: 15px; height: 15px;"></i>
+                    <span>Shuffle</span>
+                </button>
+            </div>
+
+            <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" onclick="nextCard()" id="btnNext">
+                <span>Next (→)</span>
+                <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+            </button>
+        </div>
+
+        <!-- Session Finished Modal / Card -->
+        <div id="completionOverlay" style="display: none; text-align: center; padding: 3rem 2rem;" class="vl-card">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i data-lucide="check" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.5rem;">Great Job! Session Completed!</h2>
+            <p style="color: var(--secondary-text); max-width: 440px; margin: 0 auto 1.5rem;">
+                You have reviewed all <span id="finishTotalWords"></span> cards in this session.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button type="button" class="btn-vl btn-vl-primary" onclick="restartSession()">
+                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                    <span>Restart Session</span>
+                </button>
+                <a asp-action="Index" asp-route-filter="needsPractice" class="btn-vl btn-vl-accent">
+                    <i data-lucide="repeat" style="width: 16px; height: 16px;"></i>
+                    <span>Practice Difficult Words</span>
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const rawCards = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Cards));
+    let cards = [...rawCards];
+    let currentIndex = 0;
+    let isFlipped = false;
+    const selectedLesson = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedLesson));
+
+    function renderCurrentCard() {
+        if (!cards.length) return;
+
+        const card = cards[currentIndex];
+        isFlipped = false;
+        const cardObj = document.getElementById('flashcardObject');
+        if (cardObj) cardObj.classList.remove('is-flipped');
+
+        // Front Face
+        document.getElementById('cardCategory').textContent = card.CategoryName || 'General';
+        document.getElementById('cardCategory').style.color = card.CategoryColor || '#3B82F6';
+        document.getElementById('cardFrontWord').textContent = card.Word;
+        document.getElementById('cardPronunciation').textContent = card.Pronunciation || '';
+
+        // Status badge
+        const badgeEl = document.getElementById('cardStatusBadge');
+        if (card.NeedsPractice) {
+            badgeEl.innerHTML = '<span class="badge-vl badge-needsreview">Practice</span>';
+        } else if (card.Status === 2) { // Learned
+            badgeEl.innerHTML = '<span class="badge-vl badge-learned">Learned</span>';
+        } else if (card.Status === 1) { // Learning
+            badgeEl.innerHTML = '<span class="badge-vl badge-learning">Learning</span>';
+        } else {
+            badgeEl.innerHTML = '<span class="badge-vl badge-notlearned">New</span>';
+        }
+
+        // Back Face
+        document.getElementById('cardBackMeaning').textContent = card.Meaning;
+        document.getElementById('cardExample').textContent = card.Example ? `"${card.Example}"` : '';
+
+        // Progress
+        const currentNum = currentIndex + 1;
+        document.getElementById('progressText').textContent = `Lesson ${selectedLesson} · Word ${currentNum} of ${cards.length}`;
+        const pct = Math.round((currentNum / cards.length) * 100);
+        document.getElementById('percentText').textContent = `${pct}% Completed`;
+        document.getElementById('progressBar').style.width = `${pct}%`;
+
+        // Buttons
+        document.getElementById('btnPrev').disabled = currentIndex === 0;
+        document.getElementById('btnNext').disabled = currentIndex === cards.length - 1;
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function toggleFlip() {
+        isFlipped = !isFlipped;
+        const cardObj = document.getElementById('flashcardObject');
+        if (cardObj) {
+            cardObj.classList.toggle('is-flipped', isFlipped);
+        }
+    }
+
+    function speakCurrentWord() {
+        if (!cards.length) return;
+        speakWord(cards[currentIndex].Word);
+    }
+
+    function nextCard() {
+        if (currentIndex < cards.length - 1) {
+            currentIndex++;
+            renderCurrentCard();
+        } else {
+            showCompletion();
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            renderCurrentCard();
+        }
+    }
+
+    function shuffleCards() {
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        currentIndex = 0;
+        renderCurrentCard();
+    }
+
+    async function recordAction(action) {
+        if (!cards.length) return;
+        const card = cards[currentIndex];
+
+        // Call backend API
+        try {
+            await fetch('@Url.Action("Action", "Flashcards")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    VocabularyId: card.Id,
+                    Action: action
+                })
+            });
+
+            if (action === 'know') {
+                card.NeedsPractice = false;
+                card.Status = 2; // Learned
+            } else {
+                card.NeedsPractice = true;
+                card.Status = 3; // NeedsReview
+            }
+        } catch (e) {
+            console.error('Error updating word status:', e);
+        }
+
+        nextCard();
+    }
+
+    function showCompletion() {
+        document.getElementById('flashcardScene').style.display = 'none';
+        document.getElementById('completionOverlay').style.display = 'block';
+        document.getElementById('finishTotalWords').textContent = cards.length;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function restartSession() {
+        currentIndex = 0;
+        document.getElementById('flashcardScene').style.display = 'block';
+        document.getElementById('completionOverlay').style.display = 'none';
+        renderCurrentCard();
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            return;
+        }
+
+        if (e.code === 'Space') {
+            e.preventDefault();
+            toggleFlip();
+        } else if (e.code === 'ArrowRight') {
+            e.preventDefault();
+            nextCard();
+        } else if (e.code === 'ArrowLeft') {
+            e.preventDefault();
+            prevCard();
+        } else if (e.key === '1' || e.key === 'p' || e.key === 'P') {
+            e.preventDefault();
+            recordAction('practice');
+        } else if (e.key === '2' || e.key === 'k' || e.key === 'K') {
+            e.preventDefault();
+            recordAction('know');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderCurrentCard();
+    });
+</script>
+}

@@ -1,0 +1,72 @@
+@model VocaLearn.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "_Layout";
+}
+
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.12), transparent 60%), #0B1120;">
+    <div class="vl-card" style="width: 100%; max-width: 440px; padding: 2.5rem; border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="logo-badge" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">V</div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.35rem;">Welcome to Voca<span style="color: var(--accent-cyan);">Learn</span></h1>
+            <p style="color: var(--secondary-text); font-size: 0.95rem;">Empower your English vocabulary mastery</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-vl alert-vl-danger" style="margin-bottom: 1.5rem;">
+                <div asp-validation-summary="All"></div>
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+            <div class="form-group">
+                <label asp-for="Email" class="form-label">Email Address</label>
+                <input asp-for="Email" class="form-control-vl" placeholder="name@example.com" id="emailInput" />
+                <span asp-validation-for="Email" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label asp-for="Password" class="form-label" style="margin-bottom: 0;">Password</label>
+                </div>
+                <input asp-for="Password" class="form-control-vl" placeholder="••••••••" id="passwordInput" />
+                <span asp-validation-for="Password" style="color: var(--error); font-size: 0.8rem;"></span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--secondary-text); cursor: pointer;">
+                    <input asp-for="RememberMe" type="checkbox" style="accent-color: var(--primary-blue);" />
+                    <span>Remember me</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn-vl btn-vl-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem;">
+                Sign In to Account
+            </button>
+        </form>
+
+        <!-- Quick Demo Login Shortcut -->
+        <div style="margin-top: 1.5rem; padding: 1rem; border-radius: 10px; background-color: rgba(56, 189, 248, 0.06); border: 1px dashed rgba(56, 189, 248, 0.3); text-align: center;">
+            <div style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 600; margin-bottom: 0.5rem;">DEMO ACCOUNT</div>
+            <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" style="width: 100%;" onclick="fillDemoCredentials()">
+                Fill Demo Credentials (demo@vocalearn.com)
+            </button>
+        </div>
+
+        <div style="text-align: center; margin-top: 1.75rem; font-size: 0.9rem; color: var(--secondary-text);">
+            Don't have an account? 
+            <a asp-action="Register" style="font-weight: 600; color: var(--accent-cyan);">Create one now</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fillDemoCredentials() {
+        document.getElementById('emailInput').value = 'demo@vocalearn.com';
+        document.getElementById('passwordInput').value = 'P@ssword123!';
+    }
+</script>

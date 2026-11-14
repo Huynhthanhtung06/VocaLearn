@@ -1,0 +1,91 @@
+@model List<VocaLearn.Models.QuizResult>
+@{
+    ViewData["Title"] = "Quiz History";
+}
+
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Page Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">
+                Quiz History & Records
+            </h1>
+            <p style="color: var(--secondary-text);">
+                View all your past quiz attempts and performance track records.
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn-vl btn-vl-primary">
+            <i data-lucide="play" style="width: 17px; height: 17px;"></i>
+            <span>Take New Quiz</span>
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="vl-card" style="text-align: center; padding: 4rem 1.5rem;">
+            <i data-lucide="history" style="width: 48px; height: 48px; color: var(--muted-text); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--main-text); margin-bottom: 0.5rem;">No quiz history yet</h3>
+            <p style="color: var(--secondary-text); margin-bottom: 1.5rem;">
+                Take your first vocabulary quiz to start tracking your scores and improvements.
+            </p>
+            <a asp-action="Index" class="btn-vl btn-vl-primary">Start a Quiz</a>
+        </div>
+    }
+    else
+    {
+        <div class="vl-table-container">
+            <table class="vl-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Quiz Mode</th>
+                        <th>Category</th>
+                        <th>Correct / Total</th>
+                        <th>Score</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var quiz in Model)
+                    {
+                        var isPassing = quiz.ScorePercentage >= 80;
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; color: var(--main-text);">@quiz.CompletedAt.ToString("MMM dd, yyyy")</div>
+                                <div style="font-size: 0.775rem; color: var(--secondary-text);">@quiz.CompletedAt.ToString("HH:mm") UTC</div>
+                            </td>
+                            <td>
+                                <span class="badge-vl badge-learning">@quiz.QuizMode</span>
+                            </td>
+                            <td>
+                                @(quiz.Category != null ? quiz.Category.Name : "All Categories")
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: var(--main-text);">@quiz.CorrectAnswers</span> / @quiz.TotalQuestions
+                            </td>
+                            <td>
+                                <span style="font-weight: 800; font-size: 1.05rem; color: @(isPassing ? "var(--success)" : "var(--accent-cyan)");">
+                                    @quiz.ScorePercentage%
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: inline-flex; gap: 0.5rem;">
+                                    <a asp-action="Result" asp-route-id="@quiz.Id" class="btn-vl btn-vl-secondary btn-vl-sm">
+                                        <span>Details</span>
+                                    </a>
+                                    @if (quiz.CorrectAnswers < quiz.TotalQuestions)
+                                    {
+                                        <a asp-action="Retry" asp-route-id="@quiz.Id" class="btn-vl btn-vl-danger btn-vl-sm" title="Retry Incorrect">
+                                            <i data-lucide="repeat" style="width: 14px; height: 14px;"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

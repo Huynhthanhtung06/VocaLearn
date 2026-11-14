@@ -1,0 +1,120 @@
+@model VocaLearn.ViewModels.QuizResultViewModel
+@{
+    ViewData["Title"] = "Quiz Results";
+    var hasIncorrect = Model.Details.Any(d => !d.IsCorrect);
+    var isHappy = Model.ScorePercentage > 50;
+    var encouragement = Model.ScorePercentage >= 100 ? "Perfect! Bạn làm xuất sắc, không sai câu nào! 🌟"
+        : Model.ScorePercentage >= 90 ? "Tuyệt vời! Kiến thức của bạn rất vững chắc! 🎉"
+        : Model.ScorePercentage >= 80 ? "Rất tốt! Bạn đang tiến bộ rõ rệt! 👏"
+        : Model.ScorePercentage >= 70 ? "Làm tốt lắm! Cố gắng thêm một chút nhé! 💪"
+        : Model.ScorePercentage >= 60 ? "Khá lắm! Ôn thêm một lượt là sẽ nhớ lâu hơn! 📚"
+        : Model.ScorePercentage > 50 ? "Bạn làm tốt hơn một nửa rồi! Tiếp tục phát huy nhé! 🙂"
+        : Model.ScorePercentage == 50 ? "Bạn đã đúng một nửa. Hãy luyện thêm để vượt qua mốc 50 nhé!"
+        : "Đừng buồn nhé, sai là cơ hội để học! Hãy thử lại một lần nữa 💙";
+}
+
+<div style="max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Score Card Banner -->
+    <div class="vl-card" style="text-align: center; padding: 3rem 2rem; background: radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.15), transparent 70%), var(--bg-card);">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 110px; height: 110px; border-radius: 50%; border: 6px solid @(isHappy ? "var(--success)" : "var(--error)"); margin-bottom: 1.5rem; background: rgba(0, 0, 0, 0.2);">
+            <span style="font-size: 2.25rem; font-weight: 800; color: var(--main-text);">
+                @Model.ScorePercentage%
+            </span>
+        </div>
+
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.5rem;">
+            @(isHappy ? "Bạn làm được rồi! 🎉" : "Cố lên, mình thử lại nhé! 💙")
+        </h1>
+
+        <p style="color: var(--accent-cyan); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem;">@encouragement</p>
+
+        <p style="color: var(--secondary-text); font-size: 1.05rem; margin-bottom: 2rem;">
+            You scored <strong style="color: var(--main-text);">@Model.CorrectAnswers</strong> out of <strong style="color: var(--main-text);">@Model.TotalQuestions</strong> questions correctly in <strong>@Model.QuizMode</strong> (@Model.CategoryName).
+        </p>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            @if (hasIncorrect)
+            {
+                <a asp-action="Retry" asp-route-id="@Model.QuizResultId" class="btn-vl btn-vl-danger">
+                    <i data-lucide="repeat" style="width: 17px; height: 17px;"></i>
+                    <span>Retry Incorrect Questions</span>
+                </a>
+            }
+
+            <a asp-action="Index" class="btn-vl btn-vl-primary">
+                <i data-lucide="play" style="width: 17px; height: 17px;"></i>
+                <span>Take Another Quiz</span>
+            </a>
+
+            <a asp-controller="Flashcards" asp-action="Index" class="btn-vl btn-vl-secondary">
+                <i data-lucide="layers" style="width: 17px; height: 17px;"></i>
+                <span>Practice Flashcards</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Question by Question Review -->
+    <div class="vl-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h2 class="card-title">Question Breakdown & Explanations</h2>
+                <p class="card-subtitle">Review every question, answer choices and detailed corrections</p>
+            </div>
+            <span class="badge-vl badge-learning">@Model.TotalQuestions Questions</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            @for (int i = 0; i < Model.Details.Count; i++)
+            {
+                var detail = Model.Details[i];
+                <div style="padding: 1.25rem; border-radius: 12px; border: 1px solid @(detail.IsCorrect ? "rgba(34, 197, 94, 0.25)" : "rgba(239, 68, 68, 0.25)"); background-color: @(detail.IsCorrect ? "rgba(34, 197, 94, 0.03)" : "rgba(239, 68, 68, 0.03)");">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-weight: 700; color: var(--secondary-text); font-size: 0.85rem;">Q@(i + 1).</span>
+                            <span style="font-weight: 700; color: var(--main-text); font-size: 1.05rem;">@detail.QuestionText</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button type="button" class="speak-btn" style="width: 28px; height: 28px;" onclick="speakWord('@detail.Word')" title="Pronounce">
+                                <i data-lucide="volume-2" style="width: 13px; height: 13px;"></i>
+                            </button>
+                            @if (detail.IsCorrect)
+                            {
+                                <span class="badge-vl badge-learned" style="font-size: 0.75rem;">Correct</span>
+                            }
+                            else
+                            {
+                                <span class="badge-vl badge-needsreview" style="font-size: 0.75rem;">Incorrect</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2" style="font-size: 0.9rem; margin-bottom: 0.75rem; gap: 0.75rem;">
+                        <div style="background-color: rgba(0, 0, 0, 0.2); padding: 0.65rem 0.85rem; border-radius: 8px;">
+                            <span style="color: var(--secondary-text); font-size: 0.75rem; display: block;">Your Answer:</span>
+                            <span style="color: @(detail.IsCorrect ? "var(--success)" : "var(--error)"); font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(detail.UserAnswer) ? "(No Answer)" : detail.UserAnswer)
+                            </span>
+                        </div>
+
+                        <div style="background-color: rgba(0, 0, 0, 0.2); padding: 0.65rem 0.85rem; border-radius: 8px;">
+                            <span style="color: var(--secondary-text); font-size: 0.75rem; display: block;">Correct Answer:</span>
+                            <span style="color: var(--success); font-weight: 600;">
+                                @detail.CorrectAnswer
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(detail.Explanation))
+                    {
+                        <div style="font-size: 0.85rem; color: var(--secondary-text); border-top: 1px solid var(--border-color); padding-top: 0.65rem;">
+                            <strong style="color: var(--main-text);">Explanation:</strong> @detail.Explanation
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

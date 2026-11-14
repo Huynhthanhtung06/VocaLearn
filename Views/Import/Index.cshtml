@@ -1,0 +1,134 @@
+@model VocaLearn.ViewModels.ExcelUploadViewModel
+@{
+    ViewData["Title"] = "Import Vocabulary from Excel";
+}
+
+<div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Page Header -->
+    <div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">
+            Import Vocabulary from Excel
+        </h1>
+        <p style="color: var(--secondary-text);">
+            Quickly bulk-import your vocabulary lists, definitions, and examples using ClosedXML.
+        </p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="vl-card" style="padding: 2.25rem;">
+        <div class="alert-vl alert-vl-warning" style="margin-bottom: 1.5rem; border: 1px solid rgba(245, 158, 11, 0.35);">
+            <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+            <div>
+                <strong>Before uploading, check your Excel file:</strong>
+                <ul style="margin: 0.5rem 0 0 1.1rem; line-height: 1.7;">
+                    <li>The first row must contain column headers.</li>
+                    <li><strong>English</strong> and <strong>Vietnamese</strong> are required; every vocabulary row must have both.</li>
+                    <li><strong>Pronunciation (IPA)</strong>, <strong>Example</strong>, and <strong>Category</strong> are optional. Keep each value under its matching header.</li>
+                    <li>Use an <strong>.xlsx</strong> file no larger than <strong>5 MB</strong>, and enter a Lesson name below.</li>
+                </ul>
+                <span style="display: block; margin-top: 0.5rem;">You can review detected rows on the next screen before saving them.</span>
+            </div>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-vl alert-vl-danger" style="margin-bottom: 1.5rem;">
+                <div asp-validation-summary="All"></div>
+            </div>
+        }
+
+        <form asp-action="Preview" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <!-- Drag & Drop / File Input Zone -->
+            <div style="border: 2px dashed var(--border-active); border-radius: 14px; padding: 3rem 2rem; text-align: center; background: rgba(59, 130, 246, 0.03); margin-bottom: 1.5rem; transition: var(--transition);">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(56, 189, 248, 0.12); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+                    <i data-lucide="upload-cloud" style="width: 28px; height: 28px;"></i>
+                </div>
+                
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--main-text); margin-bottom: 0.5rem;">
+                    Select or drag an Excel file (.xlsx)
+                </h3>
+                <p style="color: var(--secondary-text); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem;">
+                    Supported format: <strong>.xlsx</strong> (maximum file size: 5MB).
+                </p>
+
+                <input type="file" asp-for="File" accept=".xlsx" id="fileUploadInput" class="form-control-vl" style="max-width: 360px; margin: 0 auto;" required />
+                <span asp-validation-for="File" style="color: var(--error); font-size: 0.8rem; display: block; margin-top: 0.5rem;"></span>
+            </div>
+
+             <div style="margin-bottom: 1.5rem;">
+                 <label asp-for="LessonName" class="form-label">Lesson name</label>
+                 <input asp-for="LessonName" class="form-control-vl" placeholder="Ví dụ: Lesson 1 - Basic Vocabulary" maxlength="100" required />
+                 <span asp-validation-for="LessonName" style="color: var(--error); font-size: 0.8rem;"></span>
+                 <p style="color: var(--muted-text); font-size: 0.8rem; margin-top: 0.4rem;">All words in this file will be saved to this lesson.</p>
+             </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <button type="submit" class="btn-vl btn-vl-primary">
+                    <i data-lucide="eye" style="width: 17px; height: 17px;"></i>
+                    <span>Upload & Preview Data</span>
+                </button>
+
+                <a asp-action="DownloadTemplate" class="btn-vl btn-vl-secondary">
+                    <i data-lucide="download" style="width: 17px; height: 17px;"></i>
+                    <span>Download Excel Template (.xlsx)</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Expected Format Instructions -->
+    <div class="vl-card">
+        <h3 class="card-title" style="margin-bottom: 0.75rem;">Expected Excel Spreadsheet Structure</h3>
+        <p style="color: var(--secondary-text); font-size: 0.9rem; margin-bottom: 1.25rem;">
+            Use these headers in the first row. Column order can vary, but do not rename the headers.
+        </p>
+
+        <figure style="margin: 0 0 1.25rem;">
+            <img src="~/images/excel-import-guide.svg" asp-append-version="true" alt="Example Excel sheet with English and Vietnamese required columns and optional pronunciation, example, and category columns" style="display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color);" />
+            <figcaption style="margin-top: 0.5rem; color: var(--muted-text); font-size: 0.8rem;">Example of a correctly formatted Excel file. English and Vietnamese are required; the other columns are optional.</figcaption>
+        </figure>
+
+        <div class="vl-table-container">
+            <table class="vl-table">
+                <thead>
+                    <tr>
+                        <th>English (Required)</th>
+                        <th>Vietnamese (Required)</th>
+                        <th>Pronunciation (IPA, Optional)</th>
+                        <th>Example (Optional)</th>
+                        <th>Category (Optional)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Achieve</td>
+                        <td>/əˈtʃiːv/</td>
+                        <td>Đạt được</td>
+                        <td>I want to achieve my goal.</td>
+                        <td>Basic</td>
+                    </tr>
+                    <tr>
+                        <td>Environment</td>
+                        <td>/ɪnˈvaɪrənmənt/</td>
+                        <td>Môi trường</td>
+                        <td>Protect the environment.</td>
+                        <td>Nature</td>
+                    </tr>
+                    <tr>
+                        <td>Collaborate</td>
+                        <td>/kəˈlæbəreɪt/</td>
+                        <td>Hợp tác</td>
+                        <td>Teams collaborate efficiently.</td>
+                        <td>Business</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 1.25rem; font-size: 0.825rem; color: var(--muted-text); line-height: 1.6;">
+            💡 <strong>Smart Processing:</strong> Any new category names in your Excel sheet will automatically be created in your account. Duplicate words already in your library will be flagged in the preview before saving.
+        </div>
+    </div>
+</div>

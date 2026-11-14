@@ -1,0 +1,132 @@
+@model List<VocaLearn.ViewModels.CategoryViewModel>
+@{
+    ViewData["Title"] = "Vocabulary Categories";
+}
+
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Page Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.25rem;">
+                Categories & Topics
+            </h1>
+            <p style="color: var(--secondary-text);">
+                Organize your vocabulary into thematic topics and learning domains.
+            </p>
+        </div>
+
+        <button type="button" class="btn-vl btn-vl-primary" onclick="openAddModal()">
+            <i data-lucide="plus" style="width: 17px; height: 17px;"></i>
+            <span>New Category</span>
+        </button>
+    </div>
+
+    <!-- Category Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem;">
+        @foreach (var cat in Model)
+        {
+            <div class="vl-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 14px; height: 14px; border-radius: 50%; background-color: @cat.Color;"></div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--main-text); margin-bottom: 0;">
+                                @cat.Name
+                            </h3>
+                        </div>
+                        <span class="badge-vl badge-learning" style="background-color: rgba(255, 255, 255, 0.05); color: var(--main-text); border-color: var(--border-color);">
+                            @cat.WordCount words
+                        </span>
+                    </div>
+
+                    <p style="font-size: 0.9rem; color: var(--secondary-text); min-height: 42px; line-height: 1.5; margin-bottom: 1rem;">
+                        @(string.IsNullOrWhiteSpace(cat.Description) ? "No description provided." : cat.Description)
+                    </p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+                    <a asp-controller="Vocabulary" asp-action="Index" asp-route-categoryId="@cat.Id" class="btn-vl btn-vl-secondary btn-vl-sm">
+                        <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+                        <span>Browse Words</span>
+                    </a>
+
+                    <div style="display: flex; gap: 0.35rem;">
+                        <button type="button" class="btn-vl btn-vl-secondary btn-vl-sm" onclick="openEditModal(@cat.Id, '@cat.Name', '@(cat.Description ?? "")', '@cat.Color')" title="Edit">
+                            <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                        </button>
+                        <form asp-action="Delete" asp-route-id="@cat.Id" method="post" style="display: inline;" onsubmit="return confirm('Delete category \'@cat.Name\'? Associated words will remain safe.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-vl btn-vl-secondary btn-vl-sm" style="color: var(--error);" title="Delete">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal for Create / Edit -->
+<div id="categoryModal" style="display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="vl-card" style="width: 100%; max-width: 480px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 id="modalTitle" style="font-size: 1.35rem; font-weight: 700; color: var(--main-text);">New Category</h3>
+            <button type="button" onclick="closeModal()" style="background: none; border: none; color: var(--secondary-text); cursor: pointer; font-size: 1.25rem;">✕</button>
+        </div>
+
+        <form id="categoryForm" method="post" asp-action="Create">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="categoryId" name="Id" value="0" />
+
+            <div class="form-group">
+                <label class="form-label">Category Name *</label>
+                <input type="text" id="categoryName" name="Name" class="form-control-vl" required placeholder="e.g. Daily Conversation" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="categoryDescription" name="Description" class="form-control-vl" rows="3" placeholder="Brief note about this vocabulary topic"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Theme Color</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="color" id="categoryColor" name="Color" value="#3B82F6" style="width: 45px; height: 40px; padding: 0; border: none; border-radius: 8px; background: none; cursor: pointer;" />
+                    <span style="font-size: 0.85rem; color: var(--secondary-text);">Choose an accent color for this category</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.75rem;">
+                <button type="submit" class="btn-vl btn-vl-primary" style="flex: 1;">Save Category</button>
+                <button type="button" class="btn-vl btn-vl-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'New Category';
+        document.getElementById('categoryForm').action = '@Url.Action("Create", "Category")';
+        document.getElementById('categoryId').value = '0';
+        document.getElementById('categoryName').value = '';
+        document.getElementById('categoryDescription').value = '';
+        document.getElementById('categoryColor').value = '#3B82F6';
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+
+    function openEditModal(id, name, desc, color) {
+        document.getElementById('modalTitle').textContent = 'Edit Category';
+        document.getElementById('categoryForm').action = '@Url.Action("Edit", "Category")';
+        document.getElementById('categoryId').value = id;
+        document.getElementById('categoryName').value = name;
+        document.getElementById('categoryDescription').value = desc;
+        document.getElementById('categoryColor').value = color || '#3B82F6';
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('categoryModal').style.display = 'none';
+    }
+</script>

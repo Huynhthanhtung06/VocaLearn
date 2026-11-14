@@ -1,0 +1,144 @@
+@model VocaLearn.ViewModels.QuizSetupViewModel
+@{
+    ViewData["Title"] = "Vocabulary Quiz Setup";
+}
+
+<div style="max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Header -->
+    <div style="text-align: center;">
+        <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--main-text); margin-bottom: 0.5rem;">
+            Vocabulary Knowledge Quiz
+        </h1>
+        <p style="color: var(--secondary-text); font-size: 1.05rem; max-width: 520px; margin: 0 auto;">
+            Test your recall, translation, and fill-in-the-blank mastery with adaptive questions.
+        </p>
+    </div>
+
+    @if (Model.AvailableWordCount < 2)
+    {
+        <div class="vl-card" style="text-align: center; padding: 3rem 1.5rem;">
+            <i data-lucide="alert-circle" style="width: 48px; height: 48px; color: var(--warning); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--main-text); margin-bottom: 0.5rem;">Need More Words to Quiz</h3>
+            <p style="color: var(--secondary-text); margin-bottom: 1.5rem;">
+                You currently have @Model.AvailableWordCount words. You need at least 2 words to generate quiz questions and distractors.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+                <a asp-controller="Vocabulary" asp-action="Create" class="btn-vl btn-vl-primary">Add Words</a>
+                <a asp-controller="Import" asp-action="Index" class="btn-vl btn-vl-secondary">Import Excel</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <form method="get" asp-action="Play" class="vl-card" style="padding: 2.25rem;">
+            <!-- 1. Select Quiz Mode -->
+            <div style="margin-bottom: 2rem;">
+                <label class="form-label" style="font-size: 1.05rem; margin-bottom: 1rem;">1. Select Quiz Mode</label>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <!-- Multiple Choice -->
+                    <label class="quiz-mode-card" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; display: flex; gap: 1rem; align-items: flex-start; transition: var(--transition);">
+                        <input type="radio" name="mode" value="@QuizMode.MultipleChoice" checked style="margin-top: 0.25rem; accent-color: var(--primary-blue);" />
+                        <div>
+                            <div style="font-weight: 700; color: var(--main-text); font-size: 1rem;">Multiple Choice</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top: 0.25rem;">
+                                Given an English word, choose the correct Vietnamese meaning.
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Reverse Multiple Choice -->
+                    <label class="quiz-mode-card" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; display: flex; gap: 1rem; align-items: flex-start; transition: var(--transition);">
+                        <input type="radio" name="mode" value="@QuizMode.ReverseMultipleChoice" style="margin-top: 0.25rem; accent-color: var(--primary-blue);" />
+                        <div>
+                            <div style="font-weight: 700; color: var(--main-text); font-size: 1rem;">Reverse Multiple Choice</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top: 0.25rem;">
+                                Given a Vietnamese meaning, choose the correct English word.
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Fill in the Blank -->
+                    <label class="quiz-mode-card" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; display: flex; gap: 1rem; align-items: flex-start; transition: var(--transition);">
+                        <input type="radio" name="mode" value="@QuizMode.FillInTheBlank" style="margin-top: 0.25rem; accent-color: var(--primary-blue);" />
+                        <div>
+                            <div style="font-weight: 700; color: var(--main-text); font-size: 1rem;">Fill in the Blank</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top: 0.25rem;">
+                                Complete the missing English word in an authentic context sentence.
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Translation -->
+                    <label class="quiz-mode-card" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; display: flex; gap: 1rem; align-items: flex-start; transition: var(--transition);">
+                        <input type="radio" name="mode" value="@QuizMode.Translation" style="margin-top: 0.25rem; accent-color: var(--primary-blue);" />
+                        <div>
+                            <div style="font-weight: 700; color: var(--main-text); font-size: 1rem;">Active Translation</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top: 0.25rem;">
+                                Type the Vietnamese translation directly to test recall strength.
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 2. Category & Question Count Settings -->
+            <div class="grid-cols-2" style="margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label class="form-label">2. Category Filter</label>
+                    <select name="categoryId" class="form-control-vl">
+                        <option value="">All Categories (Entire Library)</option>
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <option value="@cat.Id">@cat.Name (@cat.Vocabularies.Count words)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">3. Number of Questions</label>
+                    <select name="count" class="form-control-vl">
+                        <option value="5">5 Questions (Quick Check)</option>
+                        <option value="10" selected>10 Questions (Recommended)</option>
+                        <option value="15">15 Questions (Deep Practice)</option>
+                        <option value="20">20 Questions (Mastery Test)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label class="form-label">Choose lesson(s) (select multiple if needed)</label>
+                @if (Model.Lessons.Any())
+                {
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.65rem; max-height: 220px; overflow-y: auto; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 10px;">
+                        @foreach (var lesson in Model.Lessons)
+                        {
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--main-text); cursor: pointer;">
+                                <input type="checkbox" name="lessonNames" value="@lesson" style="accent-color: var(--primary-blue);" />
+                                <span>@lesson</span>
+                            </label>
+                        }
+                    </div>
+                    <small style="color: var(--secondary-text);">Leave all unchecked to quiz from all lessons.</small>
+                }
+                else
+                {
+                    <p style="color: var(--secondary-text);">No lessons found. Quiz will use all your vocabulary.</p>
+                }
+            </div>
+
+            <button type="submit" class="btn-vl btn-vl-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem;">
+                <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+                <span>Start Quiz Now</span>
+            </button>
+        </form>
+    }
+
+    <!-- Quick link to history -->
+    <div style="text-align: center;">
+        <a asp-action="History" style="color: var(--secondary-text); font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <i data-lucide="history" style="width: 15px; height: 15px;"></i>
+            <span>View past quiz scores and history</span>
+        </a>
+    </div>
+</div>
